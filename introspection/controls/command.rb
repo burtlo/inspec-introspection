@@ -6,18 +6,13 @@ require './introspection/libraries/meta'
 class Inspec::Resources::Cmd
   include MetaDefinition
 
-  # break existing methods to ensure that the property definitions are working
-  def result ; end
-  def stdout ; end
-  # Defining stdout is enough to prove that the meta definitions work
-  # def stderr ; end
-  # def exit_status ; end
-  
-  # Break the matcher
-  def exist? ; end 
-  
+  # initialize has been replaced with one defined in the MetaDefinition 
+  #   when the Module#included event fires. It's a workaround because
+  #   I believe the initialize should be replaced with a more operations
+  #   focused around the resource arguments
+
   resource_parameter 'cmd', type: [:to_s], required: true, is_identifier: true do |cmd|
-    # TODO: type validation could be done automatically based on the type value if one has been defined.
+    # TODO: type validation could be done automatically based on the type value or respond_to if one has been defined.
     # TODO: type validation could also have a block provided to perform these operations
     # TODO: given that there is a block to validate the incoming arg then the assignment 
     #   to ivar could be automatic when no block is provided ; assuming the parameter
@@ -29,6 +24,7 @@ class Inspec::Resources::Cmd
   end
   
   resource_parameter 'options', type: Hash, required: false, is_identifier: false do |options|
+    # TODO: type validation could be done automatically based on the type value or respond_to if one has been defined.
     # TODO: default values could be used instead of explictly stating required false
     default_options = {}
     options ||= default_options
@@ -44,6 +40,14 @@ class Inspec::Resources::Cmd
     end
   end
 
+  
+  # BREAK existing methods/properties to ensure that the property definitions are working
+  def result ; end
+  def stdout ; end
+  # Defining stdout is enough to prove that the meta definitions work
+  # def stderr ; end
+  # def exit_status ; end
+  
   # result is defined here as a public property. If it was not meant to be public the existing
   # instance_methdod be left alone or TODO: property definition could be marked as private
   property 'result', {} do
@@ -52,20 +56,36 @@ class Inspec::Resources::Cmd
 
   property 'stdout', { type: String, 
     desc: 'The stdout property tests results of the command as returned in standard output (stdout).',
+    # LIKE using heredoc to define the example as it makes it the easist to compose
     example: <<-EXAMPLE
 describe command('echo hello') do
-  its('stdout') { should eq \"hello\n\" }
+  its('stdout') { should eq "hello\n" }
 end
 EXAMPLE
-  } do
-    result.stdout
-  end
+    # DISLIKE that the {} become required and the block follows like it does
+    # IDEA: provide the block that follows to a key in the hash provided
+    # DISLIKE that the HEREDOC'd value would always have to be last if defined in the Hash
+    #   and that could follow a fair amount of code in the property invokation
+    # IDEA: The property could be a simple shim to an instance_variable of existing method.
+    #   The method handled would handle all the code and could be private.
+    } do
+      result.stdout
+    end
+
+  # BREAK existing matchers to ensure the matcher definitions are working
+  def exist? ; end 
+  
 
   matcher 'exist?', { desc: 'Test if the command exists', example: <<-EXAMPLE
 describe command('echo') do
   it { should exist }
 end
 EXAMPLE
+    # DISLIKE that the {} become required and the block follows like it does
+    # IDEA: provide the block that follows to a key in the hash provided
+    # DISLIKE that the HEREDOC'd value would always have to be last if defined in the Hash
+    #   and that could follow a fair amount of code in the property invokation
+    # IDEA: The matcher could be a simple shim to an existing method.
       } do
     # silent for mock resources
     return false if inspec.os.name.nil? || inspec.os.name == 'mock'
@@ -181,7 +201,7 @@ describe 'Cmd Introspection' do
       let(:expected_example) do
         <<-EXAMPLE
 describe command('echo hello') do
-  its('stdout') { should eq \"hello\n\" }
+  its('stdout') { should eq "hello\n" }
 end
 EXAMPLE
       end  
