@@ -27,9 +27,7 @@ class Inspec::Resources::Port
   end
 end
 
-# When defining a port you can start with an address to filter
-# when you provide the acutal port value you filter on that
-# providing both creates a double filter
+# Test Functionality
 
 # port.instance_eval do
 #   puts info
@@ -67,11 +65,12 @@ describe port.where { protocol =~ /tcp/ && port > 22 && port < 80 } do
   it { should_not be_listening }
 end
 
-describe 'Port' do
+# Test Introspection
+
+describe 'Port Introspection' do
   let(:resource) { Inspec::Resources::Port }
 
   describe 'resource parameters' do
-
     let(:resource_parameters) { resource.resource_parameters }
 
     describe 'ip' do

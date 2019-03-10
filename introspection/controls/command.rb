@@ -3,18 +3,25 @@
 # You can find all the meta magic added to the resource within this file
 require './introspection/libraries/meta'
 
-
-
 class Inspec::Resources::Cmd
   include MetaDefinition
 
-  # break existing method to ensure the new definitions are working
+  # break existing methods to ensure that the property definitions are working
   def result ; end
   def stdout ; end
-  def exist? ; end
+  # Defining stdout is enough to prove that the meta definitions work
+  # def stderr ; end
+  # def exit_status ; end
+  
+  # Break the matcher
+  def exist? ; end 
   
   resource_parameter 'cmd', type: [:to_s], required: true, is_identifier: true do |cmd|
     # TODO: type validation could be done automatically based on the type value if one has been defined.
+    # TODO: type validation could also have a block provided to perform these operations
+    # TODO: given that there is a block to validate the incoming arg then the assignment 
+    #   to ivar could be automatic when no block is provided ; assuming the parameter
+    #   name and ivar name align.
     if cmd.nil?
       raise 'InSpec `command` was called with `nil` as the argument. This is not supported. Please provide a valid command instead.'
     end
@@ -37,8 +44,8 @@ class Inspec::Resources::Cmd
     end
   end
 
-  # result is defined here as a public property. If it was not meant to be public an instance_methdod
-  # could be defined or this property definition could be marked as private
+  # result is defined here as a public property. If it was not meant to be public the existing
+  # instance_methdod be left alone or TODO: property definition could be marked as private
   property 'result', {} do
     @result ||= inspec.backend.run_command(@command)
   end
@@ -81,8 +88,7 @@ EXAMPLE
   end
 end
 
-
-
+# Test Functionality
 
 describe command('echo hello') do  
   its(:stdout) { should eq "hello\n" }
@@ -94,14 +100,14 @@ describe command('ls') do
   it { should exist }
 end
 
-describe 'Cmd' do
+# Test Introspection
+
+describe 'Cmd Introspection' do
   let(:resource) { Inspec::Resources::Cmd }
   
   describe 'resource parameters' do
-
     let(:resource_parameters) { resource.resource_parameters }
-    # resource_parameter - name, type, description, example, required, is_identifier
-
+    
     describe 'cmd' do
       let(:name) { 'cmd' }
       let(:parameter) { resource_parameters.find { |p| p.name == name } }
@@ -154,9 +160,6 @@ describe 'Cmd' do
   describe 'properties' do
     let(:properties) { resource.properties }
 
-    # property - name, type, description, example,
-    # TODO:  identifier_for, permissions_required, see_also
-
     describe 'result' do
       let(:name) { 'result' }
       let(:property) { properties.find { |p| p.name == name } }
@@ -203,7 +206,6 @@ EXAMPLE
   end
 
   describe 'matchers' do
-    # matcher - name, args (array of hash, name, type description), description, example, permissions_required, see_also
     let(:matchers) { resource.matchers }
 
     describe 'exist?' do
