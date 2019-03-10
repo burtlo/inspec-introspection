@@ -1,22 +1,19 @@
 # encoding: utf-8
-# copyright: 2018, The Authors
-require 'ostruct'
+# copyright: 2019, The Authors
+
+# You can find all the meta magic added to the resource within this file
+require './introspection/libraries/meta'
+
 
 class Inspec::Resources::Cmd
+  include MetaDefinition
 
-  def self.resource_parameter(name, details, &post_initialize_block)
-    resource_parameters.push(OpenStruct.new({name: name, post_initialize_block: post_initialize_block}.merge(details)))
-  end
-
-  # This stores all the of the resource parameters defined.
-  #
-  # NOTE: This should likely be added some large meta definition of the Resource
-  #   to reduce the surface area introduced into the class object with these very
-  #   generic names.
-  def self.resource_parameters
-    @resource_parameters ||= []
-  end
-
+  # initialize when MetaDefinition is included
+  # break existing method to ensure the new definitions are working
+  def result ; end
+  def stdout ; end
+  def exist? ; end
+  
   resource_parameter 'cmd', type: [:to_s], required: true, is_identifier: true do |cmd|
     # TODO: type validation could be done automatically based on the type value if one has been defined.
     if cmd.nil?
@@ -41,41 +38,6 @@ class Inspec::Resources::Cmd
     end
   end
 
-  # REPLACE - #initialize
-  #
-  # As a resource can define N number of resource parameters I needed
-  # to replace the initialize argument signature with one that could
-  # take N arguments.
-  #
-  # TODO: The specific class object needs to be used because of the way that InSpec generates
-  #    resources. The class object could probably be discovered at runtime in a more generic
-  #    way
-  #
-  def initialize(*args)
-    # NOTE: a `pre_initialize` invokation by default with every resource defining an no-op method 
-    Resources::Cmd.resource_parameters.each_with_index do |rp, index|
-      instance_exec(args[index], &rp.post_initialize_block)
-    end
-    # NOTE: a `post_initialize` invokation by default with every resource defining an no-op method 
-  end
-  
-
-  # Break the Properties that we define
-  def result ; end
-  def stdout ; end
-
-  # Class level method that enables the definition of a property
-  def self.property(name, details, &block)
-    properties.push(OpenStruct.new({name: name }.merge(details)))
-    define_method name, &block
-  end
-
-  # Stores all the properties
-  # NOTE: consider creating a meta definiton of the object which stores all this information
-  def self.properties
-    @properties ||= []
-  end
-
   # result is defined here as a public property. If it was not meant to be public an instance_methdod
   # could be defined or this property definition could be marked as private
   property 'result', {} do
@@ -91,15 +53,6 @@ end
 EXAMPLE
   } do
     result.stdout
-  end
-
-  def self.matcher(name, details, &block)
-    matchers.push(OpenStruct.new({name: name }.merge(details)))
-    define_method name, &block
-  end
-
-  def self.matchers
-    @matchers ||= []
   end
 
   matcher 'exist?', { desc: 'Test if the command exists', example: <<-EXAMPLE
@@ -128,6 +81,9 @@ EXAMPLE
     res.exit_status.to_i == 0
   end
 end
+
+
+
 
 describe command('echo hello') do  
   its(:stdout) { should eq "hello\n" }
