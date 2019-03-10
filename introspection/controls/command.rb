@@ -1,13 +1,13 @@
 # encoding: utf-8
-# copyright: 2019, The Authors
 
 # You can find all the meta magic added to the resource within this file
 require './introspection/libraries/meta'
 
+
+
 class Inspec::Resources::Cmd
   include MetaDefinition
 
-  # initialize when MetaDefinition is included
   # break existing method to ensure the new definitions are working
   def result ; end
   def stdout ; end

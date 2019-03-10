@@ -5,6 +5,25 @@ module MetaDefinition
     klass.extend ResourceParameters
     klass.extend Properties
     klass.extend Matchers
+  
+    klass.instance_exec do 
+      # REPLACE - #initialize
+      #
+      # NOTE: Definining #initialize in the module places it in a "superclass" of the current class
+      #   and fails to override it. By getting inside the class object itself we are able to override it.
+      #
+      # As a resource can define N number of resource parameters I needed
+      # to replace the initialize argument signature with one that could
+      # take N arguments.
+      #
+      define_method :initialize do |*args|
+        # NOTE: a `pre_initialize` invokation by default with every resource defining an no-op method 
+        klass.resource_parameters.each_with_index do |rp, index|
+          instance_exec(args[index], &rp.post_initialize_block)
+        end
+        # NOTE: a `post_initialize` invokation by default with every resource defining an no-op method 
+      end
+    end
   end
 
   module ResourceParameters
@@ -46,26 +65,4 @@ module MetaDefinition
       @matchers ||= []
     end  
   end
-
-  # REPLACE - #initialize
-  #
-  # As a resource can define N number of resource parameters I needed
-  # to replace the initialize argument signature with one that could
-  # take N arguments.
-  #
-  # TODO: The specific class object needs to be used because of the way that InSpec generates
-  #    resources. The class object could probably be discovered at runtime in a more generic
-  #    way
-  #
-  def initialize(*args)
-    # NOTE: a `pre_initialize` invokation by default with every resource defining an no-op method 
-    Resources::Cmd.resource_parameters.each_with_index do |rp, index|
-      instance_exec(args[index], &rp.post_initialize_block)
-    end
-    # NOTE: a `post_initialize` invokation by default with every resource defining an no-op method 
-  end
-  
-
-
-  
 end
