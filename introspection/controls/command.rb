@@ -4,7 +4,6 @@
 # You can find all the meta magic added to the resource within this file
 require './introspection/libraries/meta'
 
-
 class Inspec::Resources::Cmd
   include MetaDefinition
 
@@ -227,5 +226,4 @@ EXAMPLE
       its('example') { should eq expected_example }
     end
   end
-
 end
