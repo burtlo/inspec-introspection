@@ -11,7 +11,7 @@ class Inspec::Resources::Port
     @ip = ip
   end
 
-  resource_parameter 'port', required: false, type: [:to_s], is_identifier: false do |port|
+  resource_parameter 'port', required: false, type: [:to_s], is_identifier: true do |port|
     @port = port
   end
 
@@ -80,6 +80,30 @@ describe 'Port' do
       let(:type) { [:to_s] }
       let(:required) { false }
       let(:is_identifier) { false }
+
+      it 'name' do
+        expect(parameter.name).to eq(name)
+      end
+
+      it 'type' do
+        expect(parameter.type).to eq(type)
+      end
+
+      it 'required' do
+        expect(parameter.required).to eq(required)
+      end
+
+      it 'is_identifier' do
+        expect(parameter.is_identifier).to eq(is_identifier)
+      end
+    end
+
+    describe 'port' do
+      let(:name) { 'port' }
+      let(:parameter) { resource_parameters.find { |p| p.name == name } }
+      let(:type) { [:to_s] }
+      let(:required) { false }
+      let(:is_identifier) { true }
 
       it 'name' do
         expect(parameter.name).to eq(name)
