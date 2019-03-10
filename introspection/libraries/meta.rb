@@ -17,14 +17,30 @@ module MetaDefinition
       # take N arguments.
       #
       define_method :initialize do |*args|
+        pre_initialize
+        preprocess_arguments(args)
         # NOTE: a `pre_initialize` invokation by default with every resource defining an no-op method 
         klass.resource_parameters.each_with_index do |rp, index|
           instance_exec(args[index], &rp.post_initialize_block)
         end
         # NOTE: a `post_initialize` invokation by default with every resource defining an no-op method 
+        post_initialize
       end
     end
   end
+
+  # Generate a no-op method that can be overriden in the Resource
+  # This is the first method called in the #initialize
+  def pre_initialize ; end
+
+  # The incoming arguments may need to be processed in the initialize
+  def preprocess_arguments(args)
+    args
+  end
+
+  # Generate a no-op method that can be overriden in the Resource
+  # This method is called as a final step in the #initalize
+  def post_initialize ; end
 
   module ResourceParameters
     def resource_parameter(name, details, &post_initialize_block)
