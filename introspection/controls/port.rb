@@ -21,8 +21,7 @@ class Inspec::Resources::Port
   end
 
   def post_initialize
-    # TODO: consider changing this instance variable to private method in this resource
-    @cache = nil
+    # TODO: consider changing the instance variables to private methods in this resource
     @port_manager = port_manager_for_os
     return skip_resource 'The `port` resource is not supported on your OS yet.' if @port_manager.nil?
   end
