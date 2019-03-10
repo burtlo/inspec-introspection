@@ -1,7 +1,7 @@
-name: command
+name: introspection
 title: InSpec Profile
-maintainer: The Authors
-copyright: The Authors
+maintainer: Lynn Frank
+copyright: Lynn Frank
 copyright_email: you@example.com
 license: Apache-2.0
 summary: An InSpec Compliance Profile
