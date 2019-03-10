@@ -4,6 +4,7 @@
 require './introspection/libraries/meta'
 
 class Inspec::Resources::Port
+  # NOTE: this is monkey-patched in already but to ensure we override the initialize
   include MetaDefinition
 
   # TODO: without being given a block perhaps it could be by default set an instance variable
@@ -15,6 +16,10 @@ class Inspec::Resources::Port
     @port = port
   end
 
+  # In the new initialize #preprocess_arguments happens after #pre_initialize
+  # The idea is to perform any filtering, cleaning or ordering operations and return the
+  # cleaned up arguments. In this case it is being used to enable the ip address to be an optional
+  # parameter.
   def preprocess_arguments(args)
     args.unshift(nil) if args.length <= 1 # add the ip address to the front
     args
@@ -60,6 +65,9 @@ describe port(4800).where { process == 'LogiVCCoreService' } do
   it { should be_listening }
   its('processes') { should include 'LogiVCCoreService'}
 end
+
+# TODO: custom_property count
+# TODO: custom_matcher exist?
 
 describe port.where { protocol =~ /tcp/ && port > 22 && port < 80 } do
   it { should_not be_listening }
@@ -119,6 +127,35 @@ describe 'Port Introspection' do
       it 'is_identifier' do
         expect(parameter.is_identifier).to eq(is_identifier)
       end
+    end
+  end
+
+  describe 'filter properties' do
+    let(:properties) { resource.properties }
+
+    %w[ where entries raw_data ports addresses protocols processes pids ].each do |filter_property|
+      describe filter_property do
+        let(:name) { filter_property }
+        let(:property) { properties.find { |p| p.name == name } }
+        
+        it "filter: #{filter_property}" do
+          expect(property.name).to eq(name)
+        end
+      end  
+    end
+  end
+
+  describe 'filter criterian' do
+    let(:filter_criterian) { resource.filter_criterian }
+    %w[ port address protocol process pid ].each do |filter_criteria|
+      describe filter_criteria do
+        let(:name) { filter_criteria }
+        let(:criteria) { filter_criterian.find { |p| p.name == name } }
+        
+        it "filter criteria: #{filter_criteria}" do
+          expect(criteria.name).to eq(name)
+        end
+      end  
     end
   end
 end

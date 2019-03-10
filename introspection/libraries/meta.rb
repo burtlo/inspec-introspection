@@ -44,7 +44,7 @@ module MetaDefinition
 
   module ResourceParameters
     def resource_parameter(name, details, &post_initialize_block)
-      resource_parameters.push(OpenStruct.new({name: name, post_initialize_block: post_initialize_block}.merge(details)))
+      resource_parameters.push(OpenStruct.new({ name: name, post_initialize_block: post_initialize_block}.merge(details)))
     end
 
     # This stores all the of the resource parameters defined.
@@ -60,8 +60,12 @@ module MetaDefinition
   module Properties
     # Class level method that enables the definition of a property
     def property(name, details, &block)
-      properties.push(OpenStruct.new({name: name }.merge(details)))
+      properties.push(OpenStruct.new({ name: name }.merge(details)))
       define_method name, &block
+    end
+
+    def filter_property(name, details)
+      properties.push(OpenStruct.new({ name: name, type: :filter }.merge(details)))      
     end
 
     # Stores all the properties
@@ -69,11 +73,19 @@ module MetaDefinition
     def properties
       @properties ||= []
     end
+
+    def filter_field(name, details)
+      filter_criterian.push(OpenStruct.new({ name: name }.merge(details)))      
+    end
+
+    def filter_criterian
+      @filter_criterian ||= []
+    end
   end
 
   module Matchers
     def matcher(name, details, &block)
-      matchers.push(OpenStruct.new({name: name }.merge(details)))
+      matchers.push(OpenStruct.new({ name: name }.merge(details)))
       define_method name, &block
     end
   

@@ -4,6 +4,7 @@
 require './introspection/libraries/meta'
 
 class Inspec::Resources::Cmd
+  # NOTE: this is monkey-patched in already but to ensure we override the initialize
   include MetaDefinition
 
   # initialize has been replaced with one defined in the MetaDefinition 
