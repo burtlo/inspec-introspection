@@ -130,10 +130,10 @@ describe 'Port Introspection' do
     end
   end
 
-  describe 'filter properties' do
+  describe 'filter defined properties' do
     let(:properties) { resource.properties }
 
-    %w[ where entries raw_data ports addresses protocols processes pids ].each do |filter_property|
+    %w[ where entries raw_data ports count addresses protocols processes pids ].each do |filter_property|
       describe filter_property do
         let(:name) { filter_property }
         let(:property) { properties.find { |p| p.name == name } }
@@ -142,6 +142,19 @@ describe 'Port Introspection' do
           expect(property.name).to eq(name)
         end
       end  
+    end
+
+    # NOTE: Because matchers in the filter table are defined through the same property methods
+    #   I think it would be important here to distinguish that these are matchers instead
+    %w[ exist? listening? ].each do |matcher|
+      describe matcher do
+        let(:name) { matcher }
+        let(:property) { properties.find { |p| p.name == name } }
+        
+        it "matcher: #{matcher} should not be defined" do
+          expect(property).to be_nil
+        end
+      end
     end
   end
 
@@ -156,6 +169,24 @@ describe 'Port Introspection' do
           expect(criteria.name).to eq(name)
         end
       end  
+    end
+  end
+
+  describe 'matchers' do
+    let(:matchers) { resource.matchers }
+
+    describe 'listening?' do
+      let(:name) { 'listening?' }
+      let(:subject) { matchers.find { |p| p.name == name } }
+    
+      its('name') { should eq name }
+    end
+
+    describe 'exist?' do
+      let(:name) { 'exist?' }
+      let(:subject) { matchers.find { |p| p.name == name } }
+    
+      its('name') { should eq name }
     end
   end
 end

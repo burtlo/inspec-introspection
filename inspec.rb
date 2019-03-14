@@ -33,6 +33,12 @@ module FilterTable
         # NOTE: The filter_methods where, entries and raw_data are always present and they need
         #   to be added. They really should not be done here but this patch will check if they are
         #   already defined and ignore them if they have been.
+        # TODO: Perhaps filter property should allow properties with the same name to simply replace
+        #    the previously defined property. Right now the first one is going to always appear. Instead
+        #    it could be last. So instead of managing them through an Array use a Hash.
+
+        # Because we are able to change scope of instance variables from the Factory to the Resource
+        # it is important to save the instance variable as a local variable in the scope of this method
         filter_methods = @filter_methods
         
         resource_class.instance_eval do
@@ -45,14 +51,26 @@ module FilterTable
         #   that all the reesources have the meta module included - which requires that it 
         #   be added to Inspec.resource(1)
         # 
-        custom_properties = @custom_properties
-        
+
+        # Matchers are defined as properties and that logically makes sense. But when registerting it
+        # be important to keep their definition separate.
+        # NOTE: Are matchers really just properties with an additional piece of metadata that flags them
+        #   as such? Are they really just properties that end with a question mark? Consolidating them
+        #   into just properties would make a lot of sense.
+        custom_matchers = @custom_properties.find_all { |name, details| name.to_s.end_with?('?') }
+        custom_properties = @custom_properties.reject { |name, details| name.to_s.end_with?('?') }
+
         resource_class.instance_eval do
-          custom_properties.each do |property_name,property_props|
-            filter_property(property_name.to_s,{})
+          
+          custom_properties.each do |name, details|
+            filter_property(name.to_s,{})
             # TODO: CustomPropertyType field_name and opts[:field] will often match
             #   sometimes the option is not present. I need to investigate the reason
-            filter_field(property_props.field_name,{})
+            filter_field(details.field_name,{})
+          end
+
+          custom_matchers.each do |name, details|
+            matcher(name.to_s,{})
           end
         end
       rescue Exception => e

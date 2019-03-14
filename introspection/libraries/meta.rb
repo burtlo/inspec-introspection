@@ -61,7 +61,9 @@ module MetaDefinition
     # Class level method that enables the definition of a property
     def property(name, details, &block)
       properties.push(OpenStruct.new({ name: name }.merge(details)))
-      define_method name, &block
+      # NOTE: When a property is defined it may simply be a symbolic definition and the code is already generated.
+      #   this is true currently in the FilterTable case where there is no need to define a new method definition.
+      define_method(name, &block) if block
     end
 
     def filter_property(name, details)
@@ -86,7 +88,9 @@ module MetaDefinition
   module Matchers
     def matcher(name, details, &block)
       matchers.push(OpenStruct.new({ name: name }.merge(details)))
-      define_method name, &block
+      # NOTE: When a matcher is defined it may simply be a symbolic definition and the code is already generated.
+      #   this is true currently in the FilterTable case where there is no need to define a new method definition.
+      define_method(name, &block) if block
     end
   
     def matchers
