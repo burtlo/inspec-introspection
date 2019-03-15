@@ -87,4 +87,29 @@ end
 require 'inspec'
 require 'inspec/cli'
 
+class Inspec::InspecCLI < Inspec::BaseCLI
+
+  # NOTE: Override the #exec command here is solely to make it easier to read all the details about the exception
+  #   when they happen. At the moment the default will post the error message but not where ther error is experienced
+  #   and that makes it very difficult to find that issue. I also added a binding.pry in there if further investigation
+  #   is required.
+  def exec(*targets)
+    o = config
+    diagnose(o)
+    configure_logger(o)
+
+    runner = Inspec::Runner.new(o)
+    targets.each { |target| runner.add_target(target) }
+
+    exit runner.run
+  rescue ArgumentError, RuntimeError, Train::UserError => e
+    $stderr.puts e.message
+    $stderr.puts e.backtrace.first
+    binding.pry
+    exit 1
+  rescue StandardError => e
+    pretty_handle_exception(e)
+  end
+end
+
 Inspec::InspecCLI.start(%w[exec introspection])
