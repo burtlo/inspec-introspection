@@ -91,7 +91,15 @@ module MetaDefinition
   module Matchers
     # TODO: default details should be established if having a default is appropriate
     def matcher(name, details = {}, &block)
+      # NOTE: Currently args are defined as a Hash. This quickly turns them into an
+      #   object to create the interface to simulate an object.
+      if details[:args]
+        details[:args] = details[:args].map { |arg| OpenStruct.new(arg) }
+      end
+
       matchers.push(OpenStruct.new({ name: name }.merge(details)))
+
+      
       # NOTE: When a matcher is defined it may simply be a symbolic definition and the code is already generated.
       #   this is true currently in the FilterTable case where there is no need to define a new method definition.
       define_method(name, &block) if block

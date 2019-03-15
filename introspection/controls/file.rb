@@ -42,6 +42,23 @@ class Inspec::Resources::File
       #   definition, example and potential parameters.
       matcher name
   end
+
+  # NOTE: Here the definition of the matcher relies on the existing #readable? method
+  #   that has been defined. It describes the arguments that it takes but does not 
+  #   include the examples. Similar to properties and the matcher itself including the
+  #   examples and lengthy descriptions that format well and read well would make it
+  #   difficult with all this hashing.
+  matcher 'readable?', args: [
+    { name: 'usergroup', 
+      # NOTE: the file resoure checks for presence and a non-empty string
+      #   similar to other things, perhaps this work could be expressed with a specific
+      #   and perhaps that type or validators could be provided to ensure the incoming
+      #   argument value.
+      type: [:to_s], 
+      desc: "other, others, all or the value provided. defaults to all" },
+    { name: 'specific user', type: [:to_s],
+      desc: "the identifier of the user, overrides the group value provided" }
+  ]
 end
 
 # Test Functionality
@@ -138,6 +155,31 @@ describe 'File Introspection' do
         it "matcher #{name} exists" do
           expect(matcher).not_to be_nil
         end
+      end
+    end
+
+    # NOTE: When we talk about matchers is often in the context of how they would be
+    #   used a matcher and it makes me wonder if the prefixes and suffixes that are
+    #   normally associated with the method but not the use of it should be coming
+    #   back in the introspection.
+    describe "readable?" do
+      let(:name) { 'readable?' }
+      let(:matcher) { matchers.find { |p| p.name == name } }
+
+      it "matcher #{name} exists" do
+        expect(matcher).not_to be_nil
+      end
+
+      it "has two args" do
+        expect(matcher.args.count).to eq(2)
+      end
+
+      it "has a usergroup argument" do
+        expect(matcher.args.first.name).to be 'usergroup'
+      end
+
+      it "has a specific user argument" do
+        expect(matcher.args.last.name).to be 'specific user'
       end
     end
   end
