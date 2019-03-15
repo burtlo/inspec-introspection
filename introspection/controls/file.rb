@@ -3,7 +3,7 @@
 # You can find all the meta magic added to the resource within this file
 require './introspection/libraries/meta'
 
-class Inspec::Resources::File
+class Inspec::Resources::FileResource
   # NOTE: this is monkey-patched in already but to ensure we override the initialize
   include MetaDefinition
 
@@ -25,10 +25,8 @@ class Inspec::Resources::File
       #   if that was supported by a property then there should be some default values.
       #   Though, with a property most of the property details are related to description
       #   and examples.
-      property name do |m|
-        define_method m.to_sym do |*args|
-          file.method(m.to_sym).call(*args)
-        end
+      property name, {} do |*args|
+        file.method(name.to_sym).call(*args)
       end
   end
 
@@ -59,6 +57,35 @@ class Inspec::Resources::File
     { name: 'specific user', type: [:to_s],
       desc: "the identifier of the user, overrides the group value provided" }
   ]
+
+  # NOTE: To prove that the writable definition below will define the meta and replace the execution
+  def writable?(group,user) ; fail "writable replaced" ; end
+
+  # NOTE: Defining a matcher/propert/resource_parameter via an embedded DSL
+  #   could make it easier to define the various parameters in a more legible way
+  matcher_by_dsl 'writable?' do
+    arg 'usergroup' do
+      type [:to_s]
+      desc "other, others, all or the value provided. defaults to all"
+    end
+
+    arg 'specific user' do
+      type [:to_s]
+      desc "the identifier of the user, overrides the group value provided"
+    end
+
+    # NOTE: Since the block provided to the method is now the DSL a method would need
+    #   to be added if DSL was also going to provide the code to execute.
+    # NOTE: It feels good to include the code with the definition it also has the potential
+    #   to create some cognitive overload with all the scope switching with any blocks. As
+    #   this block is executed in the resource instance at runtime.
+    execute do |by_usergroup, by_specific_user|
+      return false unless exist?
+      return skip_resource '`writable?` is not supported on your OS yet.' if @perms_provider.nil?
+
+      file_permission_granted?('write', by_usergroup, by_specific_user)
+    end
+  end
 end
 
 # Test Functionality
@@ -79,7 +106,7 @@ end
 # Test Introspection
 
 describe 'File Introspection' do
-  let(:resource) { Inspec::Resources::File }
+  let(:resource) { Inspec::Resources::FileResource }
 
   def file_properties
     %w[type link_path shallow_link_path  mtime size selinux_label 
@@ -166,7 +193,7 @@ describe 'File Introspection' do
       let(:name) { 'readable?' }
       let(:matcher) { matchers.find { |p| p.name == name } }
 
-      it "matcher #{name} exists" do
+      it "matcher readable? exists" do
         expect(matcher).not_to be_nil
       end
 
@@ -175,11 +202,33 @@ describe 'File Introspection' do
       end
 
       it "has a usergroup argument" do
-        expect(matcher.args.first.name).to be 'usergroup'
+        expect(matcher.args.first.name).to eq 'usergroup'
       end
 
       it "has a specific user argument" do
-        expect(matcher.args.last.name).to be 'specific user'
+        expect(matcher.args.last.name).to eq 'specific user'
+      end
+    end
+
+    # TODO: The matcher is defined by an attempt at doing with a DSL
+    describe "writable?" do
+      let(:name) { 'writable?' }
+      let(:matcher) { matchers.find { |p| p.name == name } }
+
+      it "matcher writable? exists" do
+        expect(matcher).not_to be_nil
+      end
+
+      it "has two args" do
+        expect(matcher.args.count).to eq(2)
+      end
+
+      it "has a usergroup argument" do
+        expect(matcher.args.first.name).to eq 'usergroup'
+      end
+
+      it "has a specific user argument" do
+        expect(matcher.args.last.name).to eq 'specific user'
       end
     end
   end

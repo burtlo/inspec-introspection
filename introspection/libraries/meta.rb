@@ -5,6 +5,7 @@ module MetaDefinition
     klass.extend ResourceParameters
     klass.extend Properties
     klass.extend Matchers
+    klass.extend MatchersByDSL
   
     klass.instance_exec do 
       # REPLACE - #initialize
@@ -104,9 +105,74 @@ module MetaDefinition
       #   this is true currently in the FilterTable case where there is no need to define a new method definition.
       define_method(name, &block) if block
     end
-  
+
     def matchers
       @matchers ||= []
     end  
+  end
+
+
+  module MatchersByDSL
+    # NOTE: The block provided is a DSL block that needs to be evaluated
+    #   in the context of Matcher builder
+    def matcher_by_dsl(name, &block)
+      built_matcher = MatcherBuilder.new.build(name, &block)
+      define_method(name, built_matcher.execute) if built_matcher.execute
+      matchers.push(built_matcher)
+   end
+
+    def matchers
+      @matchers ||= []
+    end
+
+    class ArgBuilder
+      class MatcherArg
+        attr_accessor :name, :type, :desc
+      end
+
+      attr_reader :arg
+
+      def build(name, &block)
+        @arg = MatcherArg.new
+        @arg.name = name
+        instance_exec(&block)
+        @arg
+      end
+
+      private
+      def type(value)
+        arg.type = value
+      end
+
+      def desc(value)
+        arg.desc = value
+      end
+    end
+
+    class MatcherBuilder
+      class Matcher
+        attr_accessor :name, :execute
+        def args
+          @args ||= []
+        end
+      end
+
+      attr_reader :matcher
+
+      def build(name, &block)
+        @matcher = Matcher.new
+        @matcher.name = name
+        instance_exec(&block)
+        @matcher
+      end
+
+      def arg(name,&block)
+        matcher.args.push ArgBuilder.new.build(name, &block)
+      end
+
+      def execute(&block)
+        matcher.execute = block
+      end
+    end
   end
 end
