@@ -59,14 +59,16 @@ module MetaDefinition
 
   module Properties
     # Class level method that enables the definition of a property
-    def property(name, details, &block)
+    # TODO: default details should be established if having a default is appropriate
+    def property(name, details = {}, &block)
       properties.push(OpenStruct.new({ name: name }.merge(details)))
       # NOTE: When a property is defined it may simply be a symbolic definition and the code is already generated.
       #   this is true currently in the FilterTable case where there is no need to define a new method definition.
       define_method(name, &block) if block
     end
 
-    def filter_property(name, details)
+    # TODO: default details should be established if having a default is appropriate
+    def filter_property(name, details = {})
       properties.push(OpenStruct.new({ name: name, type: :filter }.merge(details)))      
     end
 
@@ -76,7 +78,8 @@ module MetaDefinition
       @properties ||= []
     end
 
-    def filter_field(name, details)
+    # TODO: default details should be established if having a default is appropriate
+    def filter_field(name, details = {})
       filter_criterian.push(OpenStruct.new({ name: name }.merge(details)))      
     end
 
@@ -86,7 +89,8 @@ module MetaDefinition
   end
 
   module Matchers
-    def matcher(name, details, &block)
+    # TODO: default details should be established if having a default is appropriate
+    def matcher(name, details = {}, &block)
       matchers.push(OpenStruct.new({ name: name }.merge(details)))
       # NOTE: When a matcher is defined it may simply be a symbolic definition and the code is already generated.
       #   this is true currently in the FilterTable case where there is no need to define a new method definition.
