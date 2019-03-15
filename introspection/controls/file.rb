@@ -74,11 +74,20 @@ class Inspec::Resources::FileResource
       desc "the identifier of the user, overrides the group value provided"
     end
 
+    example "it { should be_writable.by('staff') }", os: 'mac_os_x'
+    example "it { should be_writable.by_user('Administrator') }", os: 'windows'
+
     # NOTE: Since the block provided to the method is now the DSL a method would need
     #   to be added if DSL was also going to provide the code to execute.
     # NOTE: It feels good to include the code with the definition it also has the potential
     #   to create some cognitive overload with all the scope switching with any blocks. As
     #   this block is executed in the resource instance at runtime.
+    # NOTE: The mention of the arguments here should probably match the name of the args stated above.
+    # NOTE: It potentially feels like poor design that the args are listed above make to the block args below.
+    #   As in they could get out of sync. The alternative would require the development of a proxy method that accepts
+    #   the args defined, verify them, and then store them. Then the execute block that would be invoked and within
+    #   that execute block the provided args could be retrieved from the stored location.but to make it easy would
+    #   likely not make it very thread-safe.
     execute do |by_usergroup, by_specific_user|
       return false unless exist?
       return skip_resource '`writable?` is not supported on your OS yet.' if @perms_provider.nil?
@@ -96,6 +105,11 @@ describe file('./inspec.rb') do
   it { should exist }
   it { should be_file }
   it { should be_readable }
+  # NOTE: The matcher is actually provided in matchers defined in inspec/lib/matchers.rb
+  #   be_readable, be_writable, be_executable (by and by_user)
+  it { should be_readable('staff') }
+  # NOTE: This is failing despite what looks like the matcher working ...
+  # it { should be_readable.by('staff') }
   it { should be_writable }
   it { should_not be_executable.by_user(current_user) }
   it { should be_owned_by current_user }
@@ -229,6 +243,14 @@ describe 'File Introspection' do
 
       it "has a specific user argument" do
         expect(matcher.args.last.name).to eq 'specific user'
+      end
+
+      it "has two examples" do
+        expect(matcher.examples.count).to eq(2)
+      end
+
+      it "specific one os-specific example" do
+        expect(matcher.examples(os: 'mac_os_x')).to include "it { should be_writable.by('staff') }"
       end
     end
   end

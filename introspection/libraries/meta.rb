@@ -125,6 +125,46 @@ module MetaDefinition
       @matchers ||= []
     end
 
+    class MatcherBuilder
+      class Matcher
+        attr_accessor :name, :execute
+        def args
+          @args ||= []
+        end
+
+        # NOTE: the filtering params will AND with multiple params provided
+        def examples(filter_params = {})
+          @examples ||= []
+          if filter_params.empty?
+            @examples
+          else
+            filter_params.map { |key,value| @examples.find_all { |example| example[key] == value }.map {|e| e[:text] } }.flatten.uniq.compact
+          end
+        end
+      end
+
+      attr_reader :matcher
+
+      def build(name, &block)
+        @matcher = Matcher.new
+        @matcher.name = name
+        instance_exec(&block)
+        @matcher
+      end
+
+      def arg(name,&block)
+        matcher.args.push ArgBuilder.new.build(name, &block)
+      end
+
+      def execute(&block)
+        matcher.execute = block
+      end
+
+      def example(text,details)
+        matcher.examples.push({ text: text }.merge(details))
+      end
+    end
+
     class ArgBuilder
       class MatcherArg
         attr_accessor :name, :type, :desc
@@ -146,32 +186,6 @@ module MetaDefinition
 
       def desc(value)
         arg.desc = value
-      end
-    end
-
-    class MatcherBuilder
-      class Matcher
-        attr_accessor :name, :execute
-        def args
-          @args ||= []
-        end
-      end
-
-      attr_reader :matcher
-
-      def build(name, &block)
-        @matcher = Matcher.new
-        @matcher.name = name
-        instance_exec(&block)
-        @matcher
-      end
-
-      def arg(name,&block)
-        matcher.args.push ArgBuilder.new.build(name, &block)
-      end
-
-      def execute(&block)
-        matcher.execute = block
       end
     end
   end
