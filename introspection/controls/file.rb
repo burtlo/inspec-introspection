@@ -15,22 +15,26 @@ class Inspec::Resources::FileResource
     @file = inspec.backend.file(path)
   end
 
-  %w[type link_path shallow_link_path  mtime size selinux_label 
+  ruby_file_methods = %w[type link_path shallow_link_path  mtime size selinux_label 
     product_version file_version version? md5sum sha256sum
-    path basename source source_path uid gid].each do |name|
-      # NOTE: A block is provided to replace the existing method definitions so that 
-      #   in the final resource definition there wouldn't exist both the meta definition
-      #   and the function definition. But they could exist separately.
-      # NOTE: There are no details provided to this property definition. I assume
-      #   if that was supported by a property then there should be some default values.
-      #   Though, with a property most of the property details are related to description
-      #   and examples.
-      property name, {} do |*args|
-        file.method(name.to_sym).call(*args)
-      end
+    path basename source source_path uid gid]
+  
+  # NOTE: This is already done in the file resource but redefining them here to see
+  #   to get a feel what a full definition would look like.
+  ruby_file_methods.each do |name|
+    # NOTE: A block is provided to replace the existing method definitions so that 
+    #   in the final resource definition there wouldn't exist both the meta definition
+    #   and the function definition. But they could exist separately.
+    # NOTE: There are no details provided to this property definition. I assume
+    #   if that was supported by a property then there should be some default values.
+    #   Though, with a property most of the property details are related to description
+    #   and examples.
+    property name, {} do |*args|
+      file.method(name.to_sym).call(*args)
+    end
   end
 
-  %w[ exist? file? block_device? character_device? socket? directory?
+  %w[exist? file? block_device? character_device? socket? directory?
     symlink? pipe? mode mode? owner owned_by? group grouped_into? linked_to? immutable? ].each do |name|
       # NOTE: No block is provided relying instead on the methods with the same name 
       #   already defined in the resource. It could contain the function declaration as 

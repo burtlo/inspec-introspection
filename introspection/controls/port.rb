@@ -7,7 +7,9 @@ class Inspec::Resources::Port
   # NOTE: this is monkey-patched in already but to ensure we override the initialize
   include MetaDefinition
 
-  # TODO: without being given a block perhaps it could be by default set an instance variable
+  # NOTE: A resource parameter WITHOUT a block of execution could:
+  #   * Take no action during the #initialize (current behavior)
+  #   * Store the incoming value in the instance, like assign to an instance variable with the same name.
   resource_parameter 'ip', required: false, type: [:to_s], is_identifier: false do |ip|
     @ip = ip
   end
