@@ -56,57 +56,59 @@ class Inspec::Resources::Cmd
   end
 
   property 'stdout', { type: String, 
+    # DISLIKE that the {} is required around the additional details of the property definition.
     desc: 'The stdout property tests results of the command as returned in standard output (stdout).',
-    # LIKE using heredoc to define the example as it makes it the easist to compose
-    example: <<-EXAMPLE
-describe command('echo hello') do
-  its('stdout') { should eq "hello\n" }
-end
-EXAMPLE
-    # DISLIKE that the {} become required and the block follows like it does
-    # IDEA: provide the block that follows to a key in the hash provided
+    # LIKE: The use of HEREDOC with the <<~ will strip the margins effectively
+    #   @see https://github.com/rubocop-hq/ruby-style-guide#heredocs
+    example: <<~EXAMPLE
+      describe command('echo hello') do
+        its('stdout') { should eq "hello\n" }
+      end
+      EXAMPLE
+    # DISLIKE: That this supports a single example. Multiple examples would require an Array which 
+    #   begins to feel cumbersome in the composition.
     # DISLIKE that the HEREDOC'd value would always have to be last if defined in the Hash
     #   and that could follow a fair amount of code in the property invokation
+    # IDEA: provide the execution block to another key in this hash of properties
     # IDEA: The property could be a simple shim to an instance_variable of existing method.
     #   The method handled would handle all the code and could be private.
     } do
+      # DISLIKE: the trailing `} do` to close the Hash and announce the block of execution.
       result.stdout
     end
 
   # BREAK existing matchers to ensure the matcher definitions are working
   def exist? ; end 
-  
 
-  matcher 'exist?', { desc: 'Test if the command exists', example: <<-EXAMPLE
-describe command('echo') do
-  it { should exist }
-end
-EXAMPLE
-    # DISLIKE that the {} become required and the block follows like it does
-    # IDEA: provide the block that follows to a key in the hash provided
-    # DISLIKE that the HEREDOC'd value would always have to be last if defined in the Hash
-    #   and that could follow a fair amount of code in the property invokation
-    # IDEA: The matcher could be a simple shim to an existing method.
-      } do
-    # silent for mock resources
-    return false if inspec.os.name.nil? || inspec.os.name == 'mock'
+  matcher('exist?', {
+    desc: 'Test if the command exists',
+    example: <<~EXAMPLE
+      describe command('echo') do
+        it { should exist }
+      end
+      EXAMPLE
+    }) do
+      # DISLIKE: the trailing `}) do` to close the Hash, method and start the block
+      
+      # silent for mock resources
+      return false if inspec.os.name.nil? || inspec.os.name == 'mock'
 
-    if inspec.os.linux?
-      res = if inspec.platform.name == 'alpine'
-              inspec.backend.run_command("which \"#{@command}\"")
-            else
-              inspec.backend.run_command("bash -c 'type \"#{@command}\"'")
-            end
-    elsif inspec.os.windows?
-      res = inspec.backend.run_command("Get-Command \"#{@command}\"")
-    elsif inspec.os.unix?
-      res = inspec.backend.run_command("type \"#{@command}\"")
-    else
-      warn "`command(#{@command}).exist?` is not supported on your OS: #{inspec.os[:name]}"
-      return false
+      if inspec.os.linux?
+        res = if inspec.platform.name == 'alpine'
+                inspec.backend.run_command("which \"#{@command}\"")
+              else
+                inspec.backend.run_command("bash -c 'type \"#{@command}\"'")
+              end
+      elsif inspec.os.windows?
+        res = inspec.backend.run_command("Get-Command \"#{@command}\"")
+      elsif inspec.os.unix?
+        res = inspec.backend.run_command("type \"#{@command}\"")
+      else
+        warn "`command(#{@command}).exist?` is not supported on your OS: #{inspec.os[:name]}"
+        return false
+      end
+      res.exit_status.to_i == 0
     end
-    res.exit_status.to_i == 0
-  end
 end
 
 # Test Functionality
